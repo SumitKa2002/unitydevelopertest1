@@ -15,6 +15,6 @@ public class PlayerAnim : MonoBehaviour
     void Update()
     {
         anim.SetBool("IsRunning", player.IsRunning());
-        //anim.SetBool("IsFalling", player.IsFalling());
+        anim.SetBool("IsFalling", player.IsFalling());
     }
 }

@@ -1,12 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
 
-    public float moveSpeed = 5f;
-    public float turnSpeed = 10f; // Added turn speed variable
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float turnSpeed = 10f; // Added turn speed variable
+    [SerializeField] private float groundDistance = 0.1f;
+    [SerializeField] private LayerMask groundLayer;
+
+    private Vector3 gravityDirection = Vector3.down;
+
     private Rigidbody rb;
     private Transform cameraT;
     private bool isRunning = false;
@@ -51,77 +58,20 @@ public class PlayerMovement : MonoBehaviour
         {
             isRunning = false;
         }
-    }
 
-    public bool IsRunning()
-    {
-        return isRunning;
-    }
-
-
-
-
-    /*
-    private Transform cameraT;
-
-    private CharacterController controller;
-    private bool isRunning = false;
-    private bool isFalling = false;
-
-    [SerializeField] private float speed = 5f;
-    [SerializeField] private float jumpHeight = 2f;
-    [SerializeField] private float gravityMultiplier = 3.0f;
-
-    private float velocity;
-    private float turnSmoothTime = 0.1f;
-    private float turnSmoothVelocity;
-    private float gravity = -9.81f;
-
-
-
-
-
-    private void Start()
-    {
-        controller = GetComponent<CharacterController>();
-        cameraT = Camera.main.transform;
-    }
-
-    void Update()
-    {
-        float horizontal = 0f;
-        float vertical = 0f;
-
-        // Check for WASD key inputs
-        if (Input.GetKey(KeyCode.W))
-            vertical = 1f;
-        else if (Input.GetKey(KeyCode.S))
-            vertical = -1f;
-
-        if (Input.GetKey(KeyCode.A))
-            horizontal = -1f;
-        else if (Input.GetKey(KeyCode.D))
-            horizontal = 1f;
-
-        if (controller.isGrounded && velocity < 0.0f)
+        //Ground Check
+        if(!Physics.Raycast(transform.position + transform.up * 0.1f, - transform.up, groundDistance, groundLayer))
         {
-            velocity = -1.0f;
+            isFalling = true;
         }
         else
         {
-            velocity += gravity * gravityMultiplier * Time.deltaTime;
+            isFalling = false;
         }
 
-        Vector3 direction = (cameraT.right * horizontal + transform.up * velocity + cameraT.forward * vertical).normalized;
-        
-        controller.Move(direction * speed * Time.deltaTime);
+        SwitchGravity();
 
-        /*if (Input.GetButtonDown("Jump") && controller.isGrounded)
-        {
-            velocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        }
     }
-    
 
     public bool IsRunning()
     {
@@ -130,15 +80,38 @@ public class PlayerMovement : MonoBehaviour
 
     public bool IsFalling()
     {
-        if (!controller.isGrounded)
-        {
-            isFalling = true;
-        }
-        else
-        {
-            isFalling = false;
-        }
         return isFalling;
-    }*/
+    }
+
+    private void SwitchGravity()
+    {
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            ChangeGravityDirection(Vector3.right);
+            rb.constraints = RigidbodyConstraints.FreezeRotationY;
+        }
+        else if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            ChangeGravityDirection(Vector3.left);
+            rb.constraints = RigidbodyConstraints.FreezeRotationY;
+        }
+        else if (Input.GetKey(KeyCode.UpArrow))
+        {
+            ChangeGravityDirection(Vector3.forward);
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
+        else if (Input.GetKey(KeyCode.DownArrow))
+        {
+            ChangeGravityDirection(Vector3.back);
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
+    }
+
+    void ChangeGravityDirection(Vector3 direction)
+    {
+        gravityDirection = direction.normalized;
+        Physics.gravity = gravityDirection * 9.81f; // Adjust the gravity strength as needed
+        rb.rotation = Quaternion.FromToRotation(transform.up, -gravityDirection) * transform.rotation;
+    }
 
 }
